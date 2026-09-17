@@ -9,7 +9,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:lock": "node tools/check-lock.mjs",
+    "test:fsrs": "node --experimental-strip-types tools/test-fsrs.mts",
+    "test:grammar": "node --import ./tools/ts-loader.mjs --experimental-strip-types tools/test-grammar.mts",
+    "test:words": "node --import ./tools/ts-loader.mjs --experimental-strip-types tools/test-integration.mts",
+    "test:grammar-int": "node --import ./tools/ts-loader.mjs --experimental-strip-types tools/test-grammar-integration.mts",
+    "test": "npm run typecheck && npm run check:lock && npm run test:fsrs && npm run test:grammar && npm run test:words && npm run test:grammar-int"
   },
   "dependencies": {
     "dexie": "^4.0.11",
@@ -24,7 +30,6 @@
     "@vitejs/plugin-react": "^4.3.4",
     "fake-indexeddb": "^6.2.5",
     "typescript": "^5.7.3",
-    "vite": "^6.0.11",
-    "vite-node": "^6.0.0"
+    "vite": "^6.0.11"
   }
 }
