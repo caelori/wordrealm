@@ -139,22 +139,98 @@ src/
 用 `mix-blend-mode: multiply` 让白色"消失"、彩色保留——比抠图稳，也不会露出方形边界。
 代价是浅色会被轻微压淡，所以配了 `filter: saturate/contrast` 补偿，且只能放在浅色背景上。
 
+## 在 iPhone 上使用
+
+**线上地址：<https://caelori.github.io/wordrealm/>**
+
+### 添加到主屏幕
+
+1. 用 **Safari** 打开上面的地址（必须是 Safari，Chrome 无法添加到主屏）
+2. 等页面首次导入词库完成（几秒）
+3. 点底部**分享按钮** → **添加到主屏幕** → 命名「词域」
+4. 之后从主屏图标启动，全屏运行、离线可用
+
+### ⚠️ 数据安全（务必读）
+
+**iOS Safari 会在空间紧张或长期不访问时清理本地存储。** 学习进度是攒出来的，
+被清掉等于白学。所以：
+
+- 应用会主动申请持久化存储，但 iOS 不保证授予
+- **请定期在「设置 → 数据与备份」导出备份**，尤其在这些时候：
+  - 换设备 / 重装浏览器之前
+  - 长时间（几周）不打算学习之前
+- 备份默认**不含 API Key**，分享出去也安全
+
+### 这不是原生 App
+
+GitHub Actions 只能构建部署网页，产出的是 **PWA**，不是 `.ipa`。
+真正的 iOS 原生应用必须用 Xcode + macOS 构建并签名，Windows 上做不到。
+
+| | PWA（当前方案） | 原生 App |
+|---|---|---|
+| 主屏图标 / 全屏 / 离线 | ✅ | ✅ |
+| 上架 App Store | ❌ | ✅ |
+| 需要 Mac + 开发者账号 | 不需要 | 需要 |
+| 数据被系统清理的风险 | ⚠️ 有 | 无 |
+
+## 部署
+
+推送到 `main` 会自动触发 GitHub Actions 构建并部署到 Pages。
+
+**⚠️ 这个网络环境封了 `github.com`，`git push` 用不了**（但 `api.github.com` 可用）。
+所以推送走 Git Data API：
+
+```powershell
+$env:GH_TOKEN = "<your_pat>"   # 需要 repo + workflow 两个 scope
+node tools/gh-push.mjs          # blob -> tree -> commit -> 更新分支
+node tools/gh-pages.mjs --watch # 盯部署状态
+node tools/gh-logs.mjs          # 失败时拉具体步骤日志
+```
+
+### 端到端验收
+
+```powershell
+node tools/verify-page.mjs https://caelori.github.io/wordrealm/ 90000
+```
+
+会新建一个干净的 CDP target，收集网络与控制台事件，断言关键资源可达，并截图。
+**这次的线上白屏就是靠它定位的**——它会明确告诉你哪个资源 404 或 MIME 不对。
+
+启动带 CDP 的浏览器（只需一次）：
+
+```powershell
+& "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" `
+  --headless=new --disable-gpu --remote-debugging-port=9333 `
+  --user-data-dir=D:\ewg_cdp about:blank
+```
+
 ## ⚠️ 实测踩坑记录
 
 这些都是**真跑过才发现的**，不是推测：
 
 | 问题 | 现象 | 处理 |
 |---|---|---|
+| **JSON 模块导入在生产失效** | 线上白屏：`Failed to fetch dynamically imported module`。Vite 打包时剥掉了 `import(url, { with: { type: 'json' } })` 的 import attribute，浏览器按普通模块脚本加载 `application/json`，触发严格 MIME 校验 | 词库移到 `public/data/` 作静态资源，运行时 `fetch` 取。dev 与生产走同一条路径 |
+| **立绘路径写死成绝对路径** | 线上 `/art/avatar.png` 全部 404（请求到了域名根目录而不是 `/wordrealm/`） | 新增 `src/systems/assets.ts`，用 `new URL(rel, document.baseURI)` 解析 |
+| **base 配置自伤** | 为适配 Pages 把 base 写死 `/wordrealm/`，结果本地 `npm run preview` 全部 404 | 改用相对 base `./`，dev / preview / Pages 三种环境同时成立 |
+| **脚本里写死 Windows 路径** | CI ENOENT：`D:\English words game/package-lock.json` | 全部改为 `import.meta.url` 推导根目录 |
+| **lock 文件跨平台不同步** | `npm ci` 报缺 `esbuild@0.28.2` 及全部平台包。原因一是 `vite-node` 拉进第二个 vite 大版本，二是 esbuild 的平台包是 optionalDependencies，npm 会剔除本平台自身的包 | 移除 `vite-node`，自写 40 行 loader 替代；CI 用 `npm install` 并新增 `check-lock.mjs` |
+| **提交信息里的 `>` 被当重定向** | PowerShell 里 `git commit -m "... -> ..."` 直接报错，但 `git push` 「成功」推了旧提交，**修复代码根本没上去** | 提交信息改用文件：`git commit -F msg.txt`。并且**推送后必须核对远端 HEAD** |
 | **`--virtual-time-budget` 会让 IndexedDB 卡死** | 无头浏览器截图时应用永远停在"打不开本地数据库"，我一度误判成产品 bug | 用 CDP 截图，靠轮询 DOM 判断就绪，**绝不加这个参数** |
 | **模型名已失效** | DeepSeek `/models` 只返回 `deepseek-flash`、`deepseek-v4-pro`，老的 `deepseek-chat` 不存在了 | 默认值改为 `deepseek-flash`，并做成可填写 |
 | **响应被 max_tokens 截断** | 生成 8 道题时 JSON 中途断裂，前 7 道完好的题被一并丢弃，白费一次调用 | `salvageTruncatedArray()` 按括号配对抢救；`MAX_TOKENS` 提到 16000 |
 | **零冠词写成空字符串** | 出冠词题时模型把"不加冠词"输出成 `""`，被当空值过滤，选项只剩 3 个 → 整题废弃 | 统一规整为 `∅`，并在 prompt 里明确要求 |
-| **一条脏数据把整个应用打白屏** | 错题本里某条记录 `stem` 为 undefined，`MistakeCard` 崩溃导致 React 卸载整棵树，页面全空 | 组件内做防御性取值 + **加 `ErrorBoundary` 兜底** |
+| **一条脏数据把整个应用打白屏** | 错题本里某条记录 `stem` 为 undefined，`MistakeCard` 崩溃导致 React 卸载整棵树 | 组件内防御性取值 + **加 `ErrorBoundary` 兜底** |
 | **flex 高度链没打通** | 卡片垂直位置算错，偏在一侧、另一侧留大片空白 | `#root > * { align-self: stretch }` |
 | **模型速度差 4 倍** | 同样 8 道题：`deepseek-flash` 26 秒，`deepseek-v4-pro` 111 秒 | 默认用 flash |
 | **ECDICT 的 `pos`/`detail` 全表为空** | README 说有，实际 0 条 | 词性从 `translation` 前缀提取；例句留给 AI |
 | **ECDICT 音标是西里尔 `ә`** | 混用 U+04D9 与真 IPA，2450 条里只有 45 条是对的 | 弃用，发音一律走 TTS |
 | **词频排序会毁掉词表** | `ielts` 标签涵盖全部基础词，前 30 名是 `in/on/say/as/go` | 先排除词频前 2000 才筛 |
+
+> **最大的教训**：这一轮我三次说"修好了"，三次都错了。
+> 原因都是**只在本地验证就下结论**——本地是 Windows、根路径、dev server，
+> 而线上是 Linux、子目录、静态托管。差异全在环境上。
+> 后来改用 `tools/verify-page.mjs` 对**真实 URL** 做端到端断言，才一次定位干净。
 
 ## 界面截图与验收工具
 
