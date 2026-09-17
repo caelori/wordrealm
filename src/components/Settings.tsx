@@ -10,6 +10,7 @@ import {
 } from '../systems/grammar/provider';
 import { clearQuestionBank } from '../db/db';
 import DataPanel from './DataPanel';
+import { BUILD_ID } from '../systems/assets';
 
 export default function Settings({ onClose }: { onClose: () => void }) {
   // 两个 store 读的是同一行 settings，但各自持有一份响应式副本，
@@ -335,6 +336,15 @@ export default function Settings({ onClose }: { onClose: () => void }) {
           数据：ECDICT（MIT License, © Linwei）
           <br />
           本应用全部数据离线存储在你的浏览器 IndexedDB 中，不上传任何信息。
+          <br />
+          <span style={{ fontFamily: 'ui-monospace, Menlo, Consolas, monospace' }}>
+            构建版本 {BUILD_ID}
+          </span>
+          <br />
+          <span>
+            排查问题时请核对这一行——手机上常见的毛病是缓存停在旧版本，
+            本地怎么测都正常。
+          </span>
         </div>
       </div>
     </div>

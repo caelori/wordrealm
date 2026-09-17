@@ -31,10 +31,19 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [tab, setTab] = useState<Tab>('today');
   const [setupNote, setSetupNote] = useState<string | null>(null);
+  const [updateReady, setUpdateReady] = useState(false);
 
   useEffect(() => {
     void boot();
   }, [boot]);
+
+  // Service Worker 装好新版本后提示刷新。
+  // 手机上 SW 很容易长期停在旧版，用户会一直吃旧缓存却不知道。
+  useEffect(() => {
+    const onReady = () => setUpdateReady(true);
+    window.addEventListener('wordrealm:update-ready', onReady);
+    return () => window.removeEventListener('wordrealm:update-ready', onReady);
+  }, []);
 
   // 一次性配置引导：?setup=<base64url> 打开即自动填好 API 配置
   useEffect(() => {
@@ -180,6 +189,22 @@ export default function App() {
 
       {phase === 'today' && (
         <>
+          {updateReady && (
+            <div className="hero" style={{ margin: '14px 26px 0', padding: 14 }}>
+              <div className="row gap12">
+                <span className="small" style={{ lineHeight: 1.6 }}>
+                  有新版本可用，刷新后生效。
+                </span>
+                <span className="spacer" />
+                <button className="primary small" onClick={() => location.reload()}>
+                  刷新
+                </button>
+                <button className="ghost small" onClick={() => setUpdateReady(false)}>
+                  稍后
+                </button>
+              </div>
+            </div>
+          )}
           {setupNote && (
             <div className="hero" style={{ margin: '14px 26px 0', padding: 14 }}>
               <div className="row gap12">

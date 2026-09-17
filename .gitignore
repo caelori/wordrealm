@@ -5,7 +5,7 @@ node_modules/
 dist/
 
 # 原始词典数据：62MB，不进仓库。
-# 词库已由 tools/etl.mjs 抽成 src/data/seeds.json（2.5MB），那个要提交。
+# 词库已由 tools/etl.mjs 抽成 public/data/seeds.json（2.5MB），那个要提交。
 _ecdict.csv
 
 # 分析过程的中间产物与日志（下划线开头的是本地临时文件）
@@ -23,6 +23,7 @@ _dl/
 _preview.log
 _preview.err
 _commitmsg.txt
+.commitmsg
 
 # 浏览器临时 profile
 _*profile*/

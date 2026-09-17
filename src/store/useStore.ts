@@ -108,7 +108,14 @@ export const useStore = create<Store>((set, get) => ({
 
       if (!settings.seeded) set({ phase: 'seeding', seedProgress: { done: 0, total: 0 } });
 
-      await seedIfNeeded(p => set({ seedProgress: p }));
+      // 词库要先取回来（现在走 fetch），再往 IndexedDB 里灌。
+      // 手机上网络不稳时这一步最容易卡住，所以给它也加超时——
+      // 否则界面会永远停在「正在唤醒」，用户不知道该干什么。
+      await withTimeout(
+        seedIfNeeded(p => set({ seedProgress: p })),
+        60_000,
+        '词库加载超时。请检查网络后点「重试」。',
+      );
 
       const [counts, todayStat, streak] = await Promise.all([
         getCounts(),
