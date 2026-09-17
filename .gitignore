@@ -1,0 +1,41 @@
+# 依赖
+node_modules/
+
+# 构建产物（由 GitHub Actions 生成并部署）
+dist/
+
+# 原始词典数据：62MB，不进仓库。
+# 词库已由 tools/etl.mjs 抽成 src/data/seeds.json（2.5MB），那个要提交。
+_ecdict.csv
+
+# 分析过程的中间产物与日志（下划线开头的是本地临时文件）
+_*.json
+_*.txt
+_*.md
+_*.png
+_*.mjs
+_*.mts
+_*.html
+
+# 截图与验收工具的临时产物
+_shots/
+_dl/
+
+# 浏览器临时 profile
+_*profile*/
+ewg_*/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+*.log
+
+# 参考资料：最初那份 AI 设计稿，不属于产品代码
+词域养女记_游戏设计方案.txt
+
+# 本地环境变量（绝不要提交密钥）
+.env
+.env.local
+.env.*.local
