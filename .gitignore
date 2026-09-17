@@ -20,6 +20,9 @@ _*.html
 # 截图与验收工具的临时产物
 _shots/
 _dl/
+_preview.log
+_preview.err
+_commitmsg.txt
 
 # 浏览器临时 profile
 _*profile*/
