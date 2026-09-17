@@ -20,7 +20,10 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC_CSV = join(ROOT, '_ecdict.csv');
-const OUT_JSON = join(ROOT, 'src', 'data', 'seeds.json');
+// 词库作为**静态资源**放在 public/ 下，运行时用 fetch 取。
+// 不放在 src/ 里被打包：那样会变成一个 2.5MB 的 JS 模块，
+// 既拖慢首屏，又会在某些部署环境下触发模块 MIME 校验问题（真实踩过）。
+const OUT_JSON = join(ROOT, 'public', 'data', 'seeds.json');
 
 // 目标词表区间：考试标签词 ∩ 词频 2001–20000
 // 下限用「排除 <= 2000」：词频前 2000 基本是 in/on/say 这类已会词，

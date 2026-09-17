@@ -8,8 +8,9 @@ import 'fake-indexeddb/auto';
 import { readFileSync } from 'node:fs';
 import { Rating, State } from 'ts-fsrs';
 
-// 注入种子数据（Node 无法解析 Vite 的 JSON 导入）
-const seeds = JSON.parse(readFileSync('src/data/seeds.json', 'utf8'));
+// 注入种子数据。词库现在是 public/ 下的静态资源（运行时会 fetch），
+// 测试里直接读文件注入，省去起服务器的麻烦。
+const seeds = JSON.parse(readFileSync('public/data/seeds.json', 'utf8'));
 (globalThis as Record<string, unknown>).__WORDREALM_SEEDS__ = seeds;
 
 const dbmod = await import('../src/db/db.ts');

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useGrammarStore } from '../store/useGrammarStore';
 import { GRAMMAR_POINTS } from '../systems/grammar/types';
 import { speak } from '../systems/tts';
+import { ART } from '../systems/assets';
 
 const DIFF_LABEL: Record<number, string> = { 1: '基础', 2: '中等', 3: '进阶' };
 
@@ -85,7 +86,7 @@ export default function Grammar() {
     return (
       <div className="bootbox">
         <div className="empty-art">
-          <img className="mascot mascot-md" src="/art/reading.png" alt="" />
+          <img className="mascot mascot-md" src={ART.reading()} alt="" />
         </div>
         <h2 style={{ margin: 0, fontSize: 19 }}>还没配置 AI</h2>
         <div className="small muted" style={{ maxWidth: 420, lineHeight: 1.8, textAlign: 'left' }}>
@@ -107,7 +108,7 @@ export default function Grammar() {
     return (
       <div className="bootbox">
         <div className="empty-art">
-          <img className="mascot mascot-md" src="/art/reading.png" alt="" />
+          <img className="mascot mascot-md" src={ART.reading()} alt="" />
         </div>
         <div style={{ fontWeight: 700 }}>{progressText || '正在准备题目…'}</div>
         <div className="tiny faint" style={{ maxWidth: 360, lineHeight: 1.7 }}>
@@ -201,7 +202,7 @@ export default function Grammar() {
     return (
       <div className="bootbox">
         <div className="empty-art">
-          <img className="mascot mascot-md" src="/art/reading.png" alt="" />
+          <img className="mascot mascot-md" src={ART.reading()} alt="" />
         </div>
         <h2 style={{ margin: 0, fontSize: 19 }}>语法练习</h2>
         <div className="small muted" style={{ lineHeight: 1.9, textAlign: 'left', maxWidth: 400 }}>

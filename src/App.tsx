@@ -10,6 +10,7 @@ import Mistakes from './components/Mistakes';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ttsSupported } from './systems/tts';
 import { consumeSetupParam } from './db/setup';
+import { ART } from './systems/assets';
 
 type Tab = 'today' | 'grammar' | 'mistakes';
 
@@ -62,7 +63,7 @@ export default function App() {
       <div className="topbar">
         <span className="brand">
           <span className="brand-avatar-wrap">
-            <img className="brand-avatar" src="/art/avatar.png" alt="" />
+            <img className="brand-avatar" src={ART.avatar()} alt="" />
           </span>
           词域<span className="en">Wordrealm</span>
         </span>
@@ -100,7 +101,7 @@ export default function App() {
       {phase === 'boot' && (
         <div className="bootbox">
           <div className="empty-art">
-            <img className="mascot mascot-md" src="/art/reading.png" alt="" />
+            <img className="mascot mascot-md" src={ART.reading()} alt="" />
           </div>
           <div className="muted">正在唤醒词域…</div>
         </div>
@@ -109,7 +110,7 @@ export default function App() {
       {phase === 'seeding' && (
         <div className="bootbox">
           <div className="empty-art">
-            <img className="mascot mascot-md" src="/art/reading.png" alt="" />
+            <img className="mascot mascot-md" src={ART.reading()} alt="" />
           </div>
           <div>
             <div style={{ fontWeight: 700, marginBottom: 6 }}>首次导入词库</div>

@@ -1,4 +1,5 @@
 import { useStore } from '../store/useStore';
+import { ART } from '../systems/assets';
 
 function fmtDuration(ms: number): string {
   if (ms < 60_000) return `${Math.round(ms / 1000)} 秒`;
@@ -24,7 +25,7 @@ export default function Done() {
   return (
     <div className="donebox">
       <div className="empty-art">
-        <img className="mascot mascot-lg" src="/art/cheer.png" alt="" />
+        <img className="mascot mascot-lg" src={ART.cheer()} alt="" />
       </div>
       <h2>这一轮结束了</h2>
 

@@ -2,12 +2,12 @@
  * W3 端到端：题库 -> 作答 -> 错题本 -> 考点统计 -> 重做攻克
  * 用 fake-indexeddb 跑真实数据层，不打真实 API。
  *
- * 用法: npx vite-node tools/test-grammar-integration.mts
+ * 用法: npm run test:grammar-int
  */
 import 'fake-indexeddb/auto';
 import { readFileSync } from 'node:fs';
 
-const seeds = JSON.parse(readFileSync('src/data/seeds.json', 'utf8'));
+const seeds = JSON.parse(readFileSync('public/data/seeds.json', 'utf8'));
 (globalThis as Record<string, unknown>).__WORDREALM_SEEDS__ = seeds;
 
 const dbmod = await import('../src/db/db.ts');

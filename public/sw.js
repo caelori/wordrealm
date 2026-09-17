@@ -11,7 +11,12 @@
  * ⚠️ 改动静态资源后必须把 VERSION 加一，否则用户会一直吃旧缓存。
  */
 
-const VERSION = 'v1';
+/**
+ * ⚠️ 每次改动静态资源或调整缓存策略后，必须把 VERSION 加一。
+ *    否则用户会一直吃旧缓存，改了也看不到效果。
+ *    v2：词库从打包模块改为 public/data 静态资源，并把立绘改为 base 感知路径
+ */
+const VERSION = 'v2';
 const CACHE = `wordrealm-${VERSION}`;
 
 /** 安装时就预缓存的少量关键资源 */
@@ -19,6 +24,7 @@ const PRECACHE = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './data/seeds.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',

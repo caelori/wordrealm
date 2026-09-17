@@ -17,6 +17,10 @@ const CDP = 'http://127.0.0.1:9333';
 // 相对自身位置推导，不写死绝对路径（写死过的教训见 README）
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '_shots');
 
+// 目标站点：默认本地开发服务器；用 WR_BASE 指向线上做验收
+// 例: $env:WR_BASE='https://caelori.github.io/wordrealm'; node tools/shoot-ui.mjs live /
+const BASE = (process.env.WR_BASE || 'http://127.0.0.1:5180').replace(/\/+$/, '');
+
 const name = process.argv[2] || 'shot';
 const path = process.argv[3] || '/';
 const readyExpr = process.argv[4] || 'true';
@@ -57,12 +61,25 @@ ws.addEventListener('message', ev => {
 await new Promise(r => ws.addEventListener('open', r));
 await send('Page.enable');
 await send('Runtime.enable');
-await send('Emulation.setDeviceMetricsOverride', {
-  width,
-  height,
-  deviceScaleFactor: 1,
-  mobile: false,
-});
+
+// 先回到白页：CDP 的 target 如果停留在别的站点上，
+// setDeviceMetricsOverride 会报 "Target does not support metrics override"
+try {
+  await send('Page.navigate', { url: 'about:blank' });
+  await new Promise(r => setTimeout(r, 500));
+} catch {
+  /* 忽略 */
+}
+try {
+  await send('Emulation.setDeviceMetricsOverride', {
+    width,
+    height,
+    deviceScaleFactor: 1,
+    mobile: false,
+  });
+} catch (e) {
+  console.log('  （视口设置失败，用默认尺寸继续：' + (e?.message ?? e) + '）');
+}
 
 const evaluate = async expr => {
   const r = await send('Runtime.evaluate', {
@@ -85,7 +102,7 @@ const waitFor = async (expr, budgetMs, label) => {
   return false;
 };
 
-await send('Page.navigate', { url: `http://127.0.0.1:5180${path}` });
+await send('Page.navigate', { url: `${BASE}${path}` });
 const t0 = Date.now();
 
 // 顺序很重要：先等应用自身引导完成，再点标签，最后等目标内容。
