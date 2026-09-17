@@ -50,23 +50,36 @@ jobs:
         run: npm run build
 
       - name: Verify build output
-        # 这几项缺任何一个，Pages 上都会白屏 —— 与其部署完再排查，不如在这里就失败
+        # 这几项缺任何一个，Pages 上都会白屏 —— 与其部署完在手机上看白屏，
+        # 不如在构建阶段就失败。
         run: |
           set -e
           test -f dist/index.html || { echo "❌ 缺少 dist/index.html"; exit 1; }
           test -f dist/sw.js || { echo "❌ 缺少 dist/sw.js（Service Worker 没被复制）"; exit 1; }
           test -f dist/manifest.webmanifest || { echo "❌ 缺少 manifest"; exit 1; }
           test -f dist/icons/icon-192.png || { echo "❌ 缺少图标"; exit 1; }
+          test -f dist/icons/apple-touch-icon.png || { echo "❌ 缺少 iOS 图标"; exit 1; }
           test -f dist/art/avatar.png || { echo "❌ 缺少立绘"; exit 1; }
 
-          # 词库必须打进产物，否则手机上会卡在"首次导入"
-          if ! ls dist/assets/seeds-*.json >/dev/null 2>&1; then
-            echo "❌ 找不到 seeds 词库文件"; exit 1
+          # 词库必须是静态资源（public/data/），不能是被打包的 JS 模块。
+          # 打成 JS 模块会触发严格 MIME 校验，线上直接白屏（真实踩过）。
+          test -f dist/data/seeds.json || { echo "❌ 缺少 dist/data/seeds.json"; exit 1; }
+          if ls dist/assets/seeds-*.json >/dev/null 2>&1; then
+            echo "❌ 词库被当成构建资源了，应放在 public/data/ 作为静态资源"
+            exit 1
+          fi
+
+          # 产物里的资源路径必须是相对路径。
+          # 绝对路径（/assets/...）在 Pages 子目录下会 404。
+          if grep -qE '(src|href)="/assets/' dist/index.html; then
+            echo "❌ index.html 里存在绝对路径资源引用，Pages 子目录下会 404"
+            grep -nE '(src|href)="/assets/' dist/index.html
+            exit 1
           fi
 
           echo "✅ 产物检查通过"
           du -sh dist
-          find dist -maxdepth 1 -type f | sort
+          find dist -maxdepth 2 -type f | sort
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
