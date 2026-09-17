@@ -3,10 +3,11 @@
  * 用法: node tools/shoot-quiz.mjs [答对|答错]
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const CDP = 'http://127.0.0.1:9333';
-const OUT_DIR = 'D:\\English words game\\_shots';
+const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '_shots');
 const mode = process.argv[2] || '答错';
 const width = Number(process.argv[3] || 820);
 const height = Number(process.argv[4] || 1250);

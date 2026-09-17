@@ -10,10 +10,12 @@
  * 例:   node tools/shoot-ui.mjs grammar / "document.body.innerText.includes('语法练习')" 20000 820 1200 语法
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const CDP = 'http://127.0.0.1:9333';
-const OUT_DIR = 'D:\\English words game\\_shots';
+// 相对自身位置推导，不写死绝对路径（写死过的教训见 README）
+const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '_shots');
 
 const name = process.argv[2] || 'shot';
 const path = process.argv[3] || '/';

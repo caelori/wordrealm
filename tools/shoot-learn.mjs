@@ -3,10 +3,11 @@
  * 用法: node tools/shoot-learn.mjs [评分档位 1|2|3]
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const CDP = 'http://127.0.0.1:9333';
-const OUT_DIR = 'D:\\English words game\\_shots';
+const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '_shots');
 const rate = process.argv[2] || '3';
 const width = Number(process.argv[3] || 820);
 const height = Number(process.argv[4] || 1000);

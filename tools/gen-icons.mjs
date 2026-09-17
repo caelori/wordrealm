@@ -9,10 +9,12 @@
  * 用法：node tools/gen-icons.mjs
  */
 import { mkdirSync, readdirSync, existsSync, rmSync, renameSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const CDP = 'http://127.0.0.1:9333';
-const ROOT = 'D:\\English words game';
+// 相对自身位置推导，不写死绝对路径
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DL = join(ROOT, '_dl');
 const OUT = join(ROOT, 'public', 'icons');
 

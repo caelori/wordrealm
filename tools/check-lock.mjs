@@ -13,9 +13,14 @@
  * 用法: node tools/check-lock.mjs
  */
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { platform } from 'node:process';
 
-const ROOT = 'D:\\English words game';
+// ⚠️ 必须用相对自身的位置推导项目根目录。
+//    之前这里写死了 'D:\English words game'，本地能跑，
+//    一到 CI（Linux）就 ENOENT —— 这类错误完全没有可移植性。
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** esbuild 需要覆盖的平台（与 esbuild 官方 optionalDependencies 一致） */
 const REQUIRED_PLATFORMS = [
@@ -49,6 +54,18 @@ const REQUIRED_PLATFORMS = [
 
 const lock = JSON.parse(readFileSync(join(ROOT, 'package-lock.json'), 'utf8'));
 const pkgs = lock.packages ?? {};
+
+/** 当前运行平台对应的 esbuild 包名 */
+function hostPackageName(plat) {
+  if (plat === 'win32') return '@esbuild/win32-x64';
+  if (plat === 'darwin') return '@esbuild/darwin-x64';
+  return '@esbuild/linux-x64';
+}
+
+function hostPlatformMissingNote(plat, present) {
+  const name = hostPackageName(plat);
+  return !present.has(name);
+}
 
 let failures = 0;
 const fail = (msg, hint) => {
@@ -122,31 +139,31 @@ if (esbuildVersions.size === 0) {
 
   const missing = REQUIRED_PLATFORMS.filter(p => !presentPlatforms.has(p));
 
-  // ⚠️ 重要：npm 在某个平台生成 lock 时，会把**该平台自己的** optional 包剔除。
-  //    所以在 Windows 上生成的 lock 天生缺 @esbuild/win32-x64，
-  //    这是正常的，不影响 Linux 上的 CI。
-  //    真正会导致 CI 失败的是缺少 CI 所在平台的包（Linux），那一项必须报错。
-  const CI_CRITICAL = ['@esbuild/linux-x64', '@esbuild/linux-arm64'];
+  // ⚠️ npm 在某个平台生成 lock 时，会把**该平台自己的** optional 包剔除，
+  //    而且不同 npm 版本对"其他平台"的收录也不完全一致。
+  //    所以这里只对一件事下结论：CI 需要的 Linux x64 包在不在。
+  //    其余缺失只做提示，不算失败——否则换个平台跑就会误报。
+  const CI_CRITICAL = ['@esbuild/linux-x64'];
   const criticalMissing = missing.filter(p => CI_CRITICAL.includes(p));
-  const hostMissing = missing.filter(p => !CI_CRITICAL.includes(p));
+  const benignMissing = missing.filter(p => !CI_CRITICAL.includes(p));
 
   if (criticalMissing.length) {
-    fail(
-      `缺 CI 必需的平台包: ${criticalMissing.join(', ')}`,
-      '在 Linux 上会直接报 Missing ... from lock file',
-    );
+    fail(`缺 CI 必需的平台包: ${criticalMissing.join(', ')}`, '在 Linux 上会报 Missing ... from lock file');
   } else {
-    pass('CI 所需的 Linux 平台包齐全');
+    pass('CI 所需的 @esbuild/linux-x64 在 lock 中');
   }
 
-  if (hostMissing.length) {
-    // 只提示，不算失败——本平台包缺失是 npm 的正常行为
+  if (benignMissing.length) {
     console.log(
-      `  · 另有 ${hostMissing.length} 个非 CI 平台包不在 lock 中（${hostMissing
-        .slice(0, 3)
-        .join(', ')}${hostMissing.length > 3 ? ' …' : ''}）`,
+      `  · 另有 ${benignMissing.length} 个平台包不在 lock 中：${benignMissing.join(', ')}`,
     );
-    console.log('    这是正常的：npm 会剔除生成 lock 时所在平台自身的 optional 包。');
+    console.log(
+      '    通常正常（npm 会剔除特定平台的 optional 包）。若 CI 报缺某个包，把它加进 CI_CRITICAL。',
+    );
+  }
+
+  if (hostPlatformMissingNote(platform, presentPlatforms)) {
+    console.log(`  · 提示：当前运行平台 ${platform} 自身的包不在 lock 中，这是 npm 的预期行为。`);
   }
 
   // 平台包版本必须与主包一致

@@ -10,9 +10,11 @@
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = 'D:\\English words game';
+// 相对自身位置推导项目根目录，不写死绝对路径
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO = 'caelori/wordrealm';
 const BRANCH = 'main';
 const API = 'https://api.github.com';
